@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Трекер привычек</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <h2 id="hello">Привычки</h2>
+  <input id="name" placeholder="Новая привычка">
+  <button onclick="add()">Добавить</button>
+  <ul id="list"></ul>
+
+  <script>
+    const tg = Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    document.getElementById('hello').textContent =
+      'Привет, ' + (tg.initDataUnsafe.user?.first_name || 'гость') + '!';
+
+    let habits = [];
+
+    function save() {
+      tg.CloudStorage.setItem('habits', JSON.stringify(habits));
+    }
+    function render() {
+      const ul = document.getElementById('list');
+      ul.innerHTML = '';
+      habits.forEach((h) => {
+        const li = document.createElement('li');
+        li.textContent = (h.done ? '✅ ' : '⬜ ') + h.name;
+        li.onclick = () => { h.done = !h.done; save(); render(); };
+        ul.appendChild(li);
+      });
+    }
+    function add() {
+      const input = document.getElementById('name');
+      if (!input.value.trim()) return;
+      habits.push({ name: input.value.trim(), done: false });
+      input.value = '';
+      save(); render();
+    }
+
+    tg.CloudStorage.getItem('habits', (err, value) => {
+      if (!err && value) habits = JSON.parse(value);
+      render();
+    });
+  </script>
+</body>
+</html>
