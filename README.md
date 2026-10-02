@@ -44,3 +44,10 @@ Telegram Mini App для отслеживания полезных привыч�
 - Локально: открыть файл `index.html` в браузере.
 
 Статус проекта: идёт разработка версии 2 (серии и статистика).
+
+## Навигация по Wiki
+
+- [Ideas](https://github.com/il0nachurina/project/wiki/Ideas) — три идеи проекта
+- [Evaluation](https://github.com/il0nachurina/project/wiki/Evaluation) — оценка идей экспертами
+- [Concept](https://github.com/il0nachurina/project/wiki/Concept) — концепция, устав, экономика
+- [Stakeholders](https://github.com/il0nachurina/project/wiki/Stakeholders) — заинтересованные стороны
