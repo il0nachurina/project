@@ -47,6 +47,19 @@ Telegram Mini App для отслеживания полезных привыч�
 
 ## Навигация по Wiki
 
+
+
+## Что умеет продукт сейчас
+
+- добавление привычек в список;
+- отметка выполнения привычки одним нажатием;
+- сохранение данных в Telegram CloudStorage.
+
+Серии, недельная статистика и удаление привычек заведены задачами на Kanban-доске и будут реализованы в следующих лабораторных.
+
+## Definition of Done
+
+Задача считается выполненной, когда изменение слито в `main` через Pull Request, ревью пройдено, приложение проверено вручную в Telegram, в репозитории нет секретов, документация обновлена, а задача закрыта и находится в статусе Done. Подробное описание процесса: [Development](https://github.com/il0nachurina/project/wiki/Development).
 - [Ideas](https://github.com/il0nachurina/project/wiki/Ideas) — три идеи проекта
 - [Evaluation](https://github.com/il0nachurina/project/wiki/Evaluation) — оценка идей экспертами
 - [Concept](https://github.com/il0nachurina/project/wiki/Concept) — концепция, устав, экономика
