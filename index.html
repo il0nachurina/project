@@ -34,12 +34,28 @@
         ul.appendChild(li);
       });
     }
-    function add() {
+        function add() {
       const input = document.getElementById('name');
       if (!input.value.trim()) return;
       habits.push({ name: input.value.trim(), done: false });
       input.value = '';
       save(); render();
+    }
+
+    function removeHabit(index) {
+      const name = habits[index].name;
+      const doRemove = () => {
+        habits.splice(index, 1);
+        save();
+        render();
+      };
+      if (tg.showConfirm) {
+        tg.showConfirm('Удалить привычку «' + name + '»?', (ok) => {
+          if (ok) doRemove();
+        });
+      } else if (confirm('Удалить привычку «' + name + '»?')) {
+        doRemove();
+      }
     }
 
     tg.CloudStorage.getItem('habits', (err, value) => {
