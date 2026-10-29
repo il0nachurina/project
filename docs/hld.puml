@@ -1,0 +1,37 @@
+@startuml
+title HLD: Telegram Mini App «Хабит»
+left to right direction
+
+actor "Пользователь" as User
+actor "Администратор\n(автор проекта)" as Admin
+
+rectangle "Telegram" {
+  component "Клиент Telegram\n(Mini App WebView)" as TG
+  database "CloudStorage\n(привычки и отметки)" as CS
+  component "Bot API" as BotAPI
+}
+
+cloud "GitHub" {
+  component "GitHub Pages\n(хостинг index.html)" as GHP
+  component "Репозиторий и Wiki" as Repo
+}
+
+rectangle "Приложение «Хабит»" {
+  component "Frontend\n(HTML, CSS, JavaScript)" as FE
+  component "Бот-сервер\n(Python, aiogram)\nRelease-2" as BOT
+  database "База напоминаний\n(SQLite)\nRelease-2" as DB
+}
+
+User --> TG : открывает приложение
+TG --> GHP : загружает страницу (HTTPS)
+GHP --> FE : отдаёт index.html
+FE --> TG : Web App API
+TG --> CS : чтение и запись привычек
+Admin --> Repo : код, задачи, документация
+Repo --> GHP : публикация
+Admin --> BotAPI : настройка бота (BotFather)
+BOT --> BotAPI : отправка напоминаний
+BotAPI --> User : сообщение-напоминание
+BOT --> DB : время и часовой пояс
+FE ..> BOT : настройка напоминаний (Release-2)
+@enduml
