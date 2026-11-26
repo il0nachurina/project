@@ -8,8 +8,11 @@
 </head>
 <body>
   <h2 id="hello">Привычки</h2>
+  <p id="currentDate"></p>
+
   <input id="name" placeholder="Новая привычка">
   <button id="addButton" onclick="add()" disabled>Добавить</button>
+
   <ul id="list"></ul>
 
   <script>
@@ -21,15 +24,38 @@
       'Привет, ' + (tg.initDataUnsafe.user?.first_name || 'гость') + '!';
 
     let habits = [];
+    let loaded = false;
+    let lastDate = '';
 
-    // Получение текущей даты
-    function today() {
-      const date = new Date();
+    // Формирование даты
+    function today(date = new Date()) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
 
       return `${year}-${month}-${day}`;
+    }
+
+    // Подсчёт последовательных дней выполнения
+    function getStreak(habit) {
+      const dates = new Set(habit.completedDates);
+      const date = new Date();
+      date.setHours(12, 0, 0, 0);
+
+      let streak = 0;
+
+      // Если сегодня привычка ещё не выполнена,
+      // проверяем серию до вчерашнего дня
+      if (!dates.has(today(date))) {
+        date.setDate(date.getDate() - 1);
+      }
+
+      while (dates.has(today(date))) {
+        streak++;
+        date.setDate(date.getDate() - 1);
+      }
+
+      return streak;
     }
 
     // Сохранение привычек
@@ -45,6 +71,13 @@
 
     // Отображение привычек
     function render() {
+      if (!loaded) return;
+
+      lastDate = today();
+
+      document.getElementById('currentDate').textContent =
+        'Сегодня: ' + new Date().toLocaleDateString('ru-RU');
+
       const ul = document.getElementById('list');
       ul.innerHTML = '';
 
@@ -52,14 +85,23 @@
         const li = document.createElement('li');
         const text = document.createElement('span');
 
-        const completed = h.completedDates.includes(today());
+        const completed = h.completedDates.includes(lastDate);
+        const streak = getStreak(h);
 
         text.textContent =
           (completed ? '✅ ' : '⬜ ') + h.name;
 
         li.appendChild(text);
 
-        // Добавление или отмена отметки за сегодня
+        // Отображение серии
+        const series = document.createElement('span');
+        series.textContent = ' 🔥 Серия: ' + streak + ' дн.';
+        series.style.marginLeft = '8px';
+        series.style.color = '#e67e22';
+
+        li.appendChild(series);
+
+        // Отметка выполнения за сегодняшний день
         li.onclick = () => {
           const date = today();
 
@@ -72,6 +114,7 @@
           }
 
           h.done = h.completedDates.includes(date);
+
           save();
           render();
         };
@@ -92,7 +135,7 @@
       });
     }
 
-    // Добавление новой привычки
+    // Добавление привычки
     function add() {
       const input = document.getElementById('name');
 
@@ -105,33 +148,34 @@
       });
 
       input.value = '';
+
       save();
       render();
     }
 
     // Удаление привычки
     function removeHabit(index) {
-      const name = habits[index].name;
+      const habit = habits[index];
 
       const doRemove = () => {
-        habits.splice(index, 1);
+        habits = habits.filter(h => h !== habit);
         save();
         render();
       };
 
       if (tg.showConfirm) {
         tg.showConfirm(
-          'Удалить привычку «' + name + '»?',
+          'Удалить привычку «' + habit.name + '»?',
           (ok) => {
             if (ok) doRemove();
           }
         );
-      } else if (confirm('Удалить привычку «' + name + '»?')) {
+      } else if (confirm('Удалить привычку «' + habit.name + '»?')) {
         doRemove();
       }
     }
 
-    // Загрузка и обновление старых данных
+    // Загрузка сохранённых данных
     tg.CloudStorage.getItem('habits', (err, value) => {
       if (err) {
         alert('Не удалось загрузить привычки');
@@ -140,6 +184,7 @@
 
       try {
         habits = value ? JSON.parse(value) : [];
+
         let migrated = false;
 
         habits.forEach(h => {
@@ -151,16 +196,29 @@
 
         if (migrated) save();
 
+        loaded = true;
+
         document.getElementById('addButton').disabled = false;
+
         render();
       } catch (error) {
         alert('Ошибка загрузки сохранённых данных');
       }
     });
 
+    // Автоматическое обновление при смене дня
+    setInterval(() => {
+      if (loaded && today() !== lastDate) {
+        render();
+      }
+    }, 1000);
+
+    // Обновление при возвращении в приложение
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) render();
     });
+
+    window.addEventListener('focus', render);
   </script>
 </body>
 </html>
