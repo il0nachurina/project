@@ -24,22 +24,51 @@
     function save() {
       tg.CloudStorage.setItem('habits', JSON.stringify(habits));
     }
-    function render() {
+        function render() {
       const ul = document.getElementById('list');
       ul.innerHTML = '';
-      habits.forEach((h) => {
+      habits.forEach((h, index) => {
         const li = document.createElement('li');
-        li.textContent = (h.done ? '✅ ' : '⬜ ') + h.name;
+        const text = document.createElement('span');
+        text.textContent = (h.done ? '✅ ' : '⬜ ') + h.name;
+        li.appendChild(text);
         li.onclick = () => { h.done = !h.done; save(); render(); };
+
+        const del = document.createElement('button');
+        del.textContent = '🗑';
+        del.title = 'Удалить привычку';
+        del.style.marginLeft = '8px';
+        del.onclick = (e) => {
+          e.stopPropagation();
+          removeHabit(index);
+        };
+        li.appendChild(del);
+
         ul.appendChild(li);
       });
     }
-    function add() {
+        function add() {
       const input = document.getElementById('name');
       if (!input.value.trim()) return;
       habits.push({ name: input.value.trim(), done: false });
       input.value = '';
       save(); render();
+    }
+
+    function removeHabit(index) {
+      const name = habits[index].name;
+      const doRemove = () => {
+        habits.splice(index, 1);
+        save();
+        render();
+      };
+      if (tg.showConfirm) {
+        tg.showConfirm('Удалить привычку «' + name + '»?', (ok) => {
+          if (ok) doRemove();
+        });
+      } else if (confirm('Удалить привычку «' + name + '»?')) {
+        doRemove();
+      }
     }
 
     tg.CloudStorage.getItem('habits', (err, value) => {
