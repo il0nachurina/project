@@ -9,71 +9,157 @@
 <body>
   <h2 id="hello">Привычки</h2>
   <input id="name" placeholder="Новая привычка">
-  <button onclick="add()">Добавить</button>
+  <button id="addButton" onclick="add()" disabled>Добавить</button>
   <ul id="list"></ul>
 
   <script>
     const tg = Telegram.WebApp;
     tg.ready();
     tg.expand();
+
     document.getElementById('hello').textContent =
       'Привет, ' + (tg.initDataUnsafe.user?.first_name || 'гость') + '!';
 
     let habits = [];
 
-    function save() {
-      tg.CloudStorage.setItem('habits', JSON.stringify(habits));
+    // Получение текущей даты
+    function today() {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
     }
-        function render() {
+
+    // Сохранение привычек
+    function save() {
+      tg.CloudStorage.setItem(
+        'habits',
+        JSON.stringify(habits),
+        (err) => {
+          if (err) alert('Не удалось сохранить изменения');
+        }
+      );
+    }
+
+    // Отображение привычек
+    function render() {
       const ul = document.getElementById('list');
       ul.innerHTML = '';
+
       habits.forEach((h, index) => {
         const li = document.createElement('li');
         const text = document.createElement('span');
-        text.textContent = (h.done ? '✅ ' : '⬜ ') + h.name;
-        li.appendChild(text);
-        li.onclick = () => { h.done = !h.done; save(); render(); };
 
+        const completed = h.completedDates.includes(today());
+
+        text.textContent =
+          (completed ? '✅ ' : '⬜ ') + h.name;
+
+        li.appendChild(text);
+
+        // Добавление или отмена отметки за сегодня
+        li.onclick = () => {
+          const date = today();
+
+          if (h.completedDates.includes(date)) {
+            h.completedDates = h.completedDates.filter(
+              d => d !== date
+            );
+          } else {
+            h.completedDates.push(date);
+          }
+
+          h.done = h.completedDates.includes(date);
+          save();
+          render();
+        };
+
+        // Кнопка удаления
         const del = document.createElement('button');
         del.textContent = '🗑';
         del.title = 'Удалить привычку';
         del.style.marginLeft = '8px';
+
         del.onclick = (e) => {
           e.stopPropagation();
           removeHabit(index);
         };
-        li.appendChild(del);
 
+        li.appendChild(del);
         ul.appendChild(li);
       });
     }
-        function add() {
+
+    // Добавление новой привычки
+    function add() {
       const input = document.getElementById('name');
+
       if (!input.value.trim()) return;
-      habits.push({ name: input.value.trim(), done: false });
+
+      habits.push({
+        name: input.value.trim(),
+        done: false,
+        completedDates: []
+      });
+
       input.value = '';
-      save(); render();
+      save();
+      render();
     }
 
+    // Удаление привычки
     function removeHabit(index) {
       const name = habits[index].name;
+
       const doRemove = () => {
         habits.splice(index, 1);
         save();
         render();
       };
+
       if (tg.showConfirm) {
-        tg.showConfirm('Удалить привычку «' + name + '»?', (ok) => {
-          if (ok) doRemove();
-        });
+        tg.showConfirm(
+          'Удалить привычку «' + name + '»?',
+          (ok) => {
+            if (ok) doRemove();
+          }
+        );
       } else if (confirm('Удалить привычку «' + name + '»?')) {
         doRemove();
       }
     }
 
+    // Загрузка и обновление старых данных
     tg.CloudStorage.getItem('habits', (err, value) => {
-      if (!err && value) habits = JSON.parse(value);
-      render();
+      if (err) {
+        alert('Не удалось загрузить привычки');
+        return;
+      }
+
+      try {
+        habits = value ? JSON.parse(value) : [];
+        let migrated = false;
+
+        habits.forEach(h => {
+          if (!Array.isArray(h.completedDates)) {
+            h.completedDates = h.done ? [today()] : [];
+            migrated = true;
+          }
+        });
+
+        if (migrated) save();
+
+        document.getElementById('addButton').disabled = false;
+        render();
+      } catch (error) {
+        alert('Ошибка загрузки сохранённых данных');
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) render();
     });
   </script>
 </body>
